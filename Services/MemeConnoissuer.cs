@@ -22,14 +22,14 @@ public class Connoisseur : Outils.StartStop
     private List<(string Subreddit, Mode Mode, int Count)> Query = new() {
         ("dankmemes", Mode.Hot, 23), ("me_irl", Mode.Hot, 23)
     };
-    private List<string> urls => 
-        Query.Select(q => $"https://www.reddit.com/r/{q.Subreddit}/{q.Mode.ToString().ToLower()}/.json?limit={q.Count}").ToList();
+    private List<string> Urls(List<(string Subreddit, Mode Mode, int Count)>? Custom = null) => 
+        (Custom ?? Query).Select(q => $"https://www.reddit.com/r/{q.Subreddit}/{q.Mode.ToString().ToLower()}/.json?limit={q.Count}").ToList();
 
-    private bool isMeme(string url) => url.StartsWith("https://i.redd.it");
+    private bool IsMeme(string url) => url.StartsWith("https://i.redd.it");
 
-    public async Task<List<string>> GetPostsAsync(){
+    public async Task<List<string>> GetPostsAsync(List<(string Subreddit, Mode Mode, int Count)>? Custom = null){
         var Total = new List<string>();
-        foreach (var url in urls)
+        foreach (var url in Urls(Custom))
         {
             var response = await clients.http.GetAsync(url);
             var content = await response.Content.ReadAsStringAsync();
@@ -37,18 +37,18 @@ public class Connoisseur : Outils.StartStop
             var posts =
                     (from post in ((IEnumerable)dict.data.children).Cast<dynamic>()
                     let source = post.data.url
-                    where isMeme((string)source)
+                    where IsMeme((string)source)
                     select (string)post.data.url).ToList();
             Total.AddRange(posts);
         }
         return Total;
     } 
-    public async Task Serve(bool once = false){
+    public async Task Serve(bool once = false, List<(string Subreddit, Mode Mode, int Count)>? Custom = null){
         var Body = async () => {
             if(IsRunning || once){
-                var posts = await GetPostsAsync();
+                var posts = await GetPostsAsync(once ? Custom : null);
                 posts.ForEach(post => System.Console.WriteLine(post));
-                Client.Targets.ForEach(async id => {
+                Client.Targets?.ForEach(async id => {
                     var channel = await clients.discord.GetChannelAsync(id);
                     posts.ForEach(async p => await channel.SendMessageAsync(p));
                 });

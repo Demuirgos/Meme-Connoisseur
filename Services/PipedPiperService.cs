@@ -47,8 +47,11 @@ public class PipedPiper : Outils.StartStop
                     } ,
                     Commands.fetch => async () =>
                     {
+                        var chunks = e.Message.Content.Split(' ')[1..].Chunk(3)
+                            .Select(chunk => (chunk[0], Enum.Parse<Connoisseur.Mode>(chunk[1]), int.Parse(chunk[2])))
+                            .ToList();
                         var server = await Connoisseur.Create(startImmediately: false);
-                        await server.Serve(once: true);
+                        await server.Serve(once: true, Custom: chunks);
                     } ,
                     _ => throw new NotImplementedException()
                 };

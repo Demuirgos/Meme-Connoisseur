@@ -1,13 +1,12 @@
 ﻿using DiscordLayer;
 using Memester;
 
-//permisions: 2150755328
 Client.Targets = new List<ulong> {
-        ulong.Parse("{{TargetsChannelsID}}"),
+        ulong.Parse("{{target_channel_id}}"),
     };
 
 var Server = await Connoisseur.Create();
-var Piper  = await PipedPiper.Create(ulong.Parse("{{SourceChannelsID}}"));
+var Piper  = await PipedPiper.Create(ulong.Parse("{{source_channel_id}}"));
 
 Server.Start();
 Piper.Start();
