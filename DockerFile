@@ -1,0 +1,5 @@
+FROM mcr.microsoft.com/dotnet/runtime:6.0
+COPY bin/release/net6.0/publish App/
+WORKDIR /App
+ENTRYPOINT ["dotnet", "MemesThief.dll"]
+ENV DOTNET_EnableDiagnostics=0
