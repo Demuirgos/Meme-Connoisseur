@@ -9,10 +9,11 @@ public class Connoisseur
         Top, Hot, New
     }
     private (HttpClient http, Client discord) clients;
-    public static async Task<Connoisseur> Create(){
+    public static async Task<Connoisseur> Create(bool startImmediately = true) {
         var server = new Connoisseur();
         server.clients = (new HttpClient(), await Client.Create());
-        new Thread(async () => await server.Serve()).Start();
+        if(startImmediately)
+            new Thread(async () => await server.Serve()).Start();
         return server;
     }
     PeriodicTimer timer = new(TimeSpan.FromHours(24));
@@ -43,10 +44,10 @@ public class Connoisseur
     private bool isRunning = false;
     public void Start() => isRunning = true;
     public void Stop() => isRunning = false;
-    public async Task Serve(){
+    public async Task Serve(bool once = false){
         while (await timer.WaitForNextTickAsync())
         {
-            if(isRunning){
+            if(isRunning || once){
                 var posts = await GetPostsAsync();
                 posts.ForEach(post => System.Console.WriteLine(post));
                 Client.Targets.ForEach(async id => {
@@ -54,6 +55,8 @@ public class Connoisseur
                     posts.ForEach(async p => await channel.SendMessageAsync(p));
                 });
             }
+            if(once)
+                break;
         }
     }
 }
