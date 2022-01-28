@@ -2,13 +2,12 @@
 using Memester;
 
 //permisions: 2150755328
-Client.Targets = new List<ulong>{
-    ulong.Parse("936404347204542494"),
-    ulong.Parse("936404347204542494")
-};
+Client.Targets = new List<ulong> {
+        ulong.Parse("{{TargetsChannelsID}}"),
+    };
 
 var Server = await Connoisseur.Create();
-var Piper  = await PipedPiper.Create(ulong.Parse("{{RootChannelID}}"));
+var Piper  = await PipedPiper.Create(ulong.Parse("{{SourceChannelsID}}"));
 
 Server.Start();
 Piper.Start();

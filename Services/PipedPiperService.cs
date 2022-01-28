@@ -4,19 +4,17 @@ using DSharpPlus.Entities;
 using System;
 
 namespace Memester;
-public class PipedPiper
+public class PipedPiper : Outils.StartStop
 {
     enum Commands {
         broadcast, fetch
     }
-    private Client client;
-    private bool isRunning = false;
+    private Client? client;
     private (ulong from, List<ulong> dest) pipes;
-    public void Start() => isRunning = true;
-    public void Stop() => isRunning = false;
     private PipedPiper(ulong from, List<ulong> dest) 
         => this.pipes = (from, dest);
-    public static async Task<PipedPiper> Create(ulong from , List<ulong> dest = null) {
+
+    public static async Task<PipedPiper> Create(ulong from , List<ulong>? dest = null) {
         var piper = new PipedPiper(from, dest ?? Client.Targets)
         {
             client = await Client.Create()
@@ -26,7 +24,7 @@ public class PipedPiper
     }
     private async Task Pipe(DiscordClient _, DSharpPlus.EventArgs.MessageCreateEventArgs e) {
         if(Enum.GetNames<Commands>().Select(c => $"-{c}").Any(prefix => e.Message.Content.StartsWith(prefix)))
-            if (isRunning && e.Channel.Id == pipes.from) {
+            if (IsRunning && e.Channel.Id == pipes.from && client is not null) {
                 var prefix = Enum.Parse<Commands>(e.Message.Content.Split(' ')[0][1..]);
                 Func<Task> handler = prefix switch
                 {
@@ -36,7 +34,7 @@ public class PipedPiper
                         {
                             var channel = await client.GetChannelAsync(id);
                             await channel.SendMessageAsync(e.Message.Content[
-                                (e.Message.Content.SkipWhile(c => c != ' ').Count() + 1)..]
+                                (e.Message.Content.TakeWhile(c => c != ' ').Count() + 1)..]
                             );
                             if (e.Message.Attachments.Count > 0)
                             {

@@ -4,11 +4,9 @@ using DSharpPlus;
 
 namespace DiscordLayer;
 public class Client {
-    private string tokenkey = Environment.GetEnvironmentVariable("$DiscordTokenApp$");
-    public static List<ulong> Targets {get; set;} = new(){
-        ulong.Parse("{{ChannelsIDs}}")
-    };
-    public DiscordClient Discord {get; set;} = null;
+    private readonly string? tokenkey = Environment.GetEnvironmentVariable("$DiscordTokenApp0$");
+    public static List<ulong>? Targets {get; set;}
+    public DiscordClient? Discord {get; set;} = null;
     private Client(List<ulong> channelIds) {
         Discord = new(new DiscordConfiguration() {
                         Token = tokenkey,
@@ -16,15 +14,19 @@ public class Client {
                         Intents = DiscordIntents.AllUnprivileged     
                     });
         
-        Targets.AddRange(channelIds);
+        Targets?.AddRange(channelIds);
     }
-    public static async Task<Client> Create(List<ulong> channelIds = null) {
+    public static async Task<Client> Create(List<ulong>? channelIds = null) {
         try
         {
             var client = new Client(channelIds ?? new List<ulong>());
-            await client.Discord.ConnectAsync();
-            Console.WriteLine("Connection Completed");
-            return client;
+            DiscordClient? discord = client.Discord;
+            if(discord is not null){
+                await discord.ConnectAsync();
+                Console.WriteLine("Connection Completed");
+                return client;
+            }
+            else throw new Exception("Discord Client is null");
         }
         catch (Exception e)
         {
@@ -32,5 +34,6 @@ public class Client {
             throw;
         }
     }
-    public async Task<DSharpPlus.Entities.DiscordChannel> GetChannelAsync(ulong id) => await Discord.GetChannelAsync(id);
+    public async Task<DSharpPlus.Entities.DiscordChannel?> GetChannelAsync(ulong id) 
+        =>  Discord is not null ? await Discord.GetChannelAsync(id) : null;
 }

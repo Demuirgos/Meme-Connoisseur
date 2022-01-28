@@ -2,8 +2,10 @@ using System.Collections;
 using Newtonsoft.Json;
 using DiscordLayer;
 using DSharpPlus;
+using System.Reflection;
+
 namespace Memester;
-public class Connoisseur
+public class Connoisseur : Outils.StartStop
 {
     public enum Mode {
         Top, Hot, New
@@ -41,13 +43,9 @@ public class Connoisseur
         }
         return Total;
     } 
-    private bool isRunning = false;
-    public void Start() => isRunning = true;
-    public void Stop() => isRunning = false;
     public async Task Serve(bool once = false){
-        while (await timer.WaitForNextTickAsync())
-        {
-            if(isRunning || once){
+        var Body = async () => {
+            if(IsRunning || once){
                 var posts = await GetPostsAsync();
                 posts.ForEach(post => System.Console.WriteLine(post));
                 Client.Targets.ForEach(async id => {
@@ -55,8 +53,13 @@ public class Connoisseur
                     posts.ForEach(async p => await channel.SendMessageAsync(p));
                 });
             }
-            if(once)
-                break;
+        };
+
+        if(once)
+            await Body();
+        else while (await timer.WaitForNextTickAsync())
+        {
+            await Body();
         }
     }
 }
