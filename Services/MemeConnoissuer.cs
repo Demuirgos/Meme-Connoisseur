@@ -12,6 +12,7 @@ public class Connoisseur : Outils.StartStop
     }
     private (HttpClient http, Client discord) clients;
     public static async Task<Connoisseur> Create(bool startImmediately = true) {
+        Console.Write("Reddit Server :");
         var server = new Connoisseur();
         server.clients = (new HttpClient(), await Client.Create());
         if(startImmediately)
@@ -20,7 +21,7 @@ public class Connoisseur : Outils.StartStop
     }
     PeriodicTimer timer = new(TimeSpan.FromHours(24));
     private List<(string Subreddit, Mode Mode, int Count)> Query = new() {
-        ("dankmemes", Mode.Hot, 23), ("me_irl", Mode.Hot, 23)
+        ("dankmemes", Mode.Hot, 2), ("me_irl", Mode.Hot, 2)
     };
     private List<string> Urls(List<(string Subreddit, Mode Mode, int Count)>? Custom = null) => 
         (Custom ?? Query).Select(q => $"https://www.reddit.com/r/{q.Subreddit}/{q.Mode.ToString().ToLower()}/.json?limit={q.Count}").ToList();

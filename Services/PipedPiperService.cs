@@ -2,6 +2,7 @@ using DSharpPlus;
 using DiscordLayer;
 using DSharpPlus.Entities;
 using System;
+using System.Linq;
 
 namespace Memester;
 public class PipedPiper : Outils.StartStop
@@ -13,11 +14,12 @@ public class PipedPiper : Outils.StartStop
     private (ulong? from, List<ulong>? dest) pipes => (Client.Targets?.ElementAt(0), Client.Targets);
     private bool isInitialized => pipes.from is not null && pipes.dest is not null;
     public static async Task<PipedPiper> Create() {
+        Console.Write("Pipe Hooks :");
         var piper = new PipedPiper
         {
             client = await Client.Create()
         };
-        piper.client.Discord.MessageCreated += piper.Pipe;
+        Client.Discord.MessageCreated += piper.Pipe;
         return piper;
     }
     private async Task Pipe(DiscordClient _, DSharpPlus.EventArgs.MessageCreateEventArgs e) {
@@ -36,9 +38,9 @@ public class PipedPiper : Outils.StartStop
                             );
                             if (e.Message.Attachments.Count > 0)
                             {
-                                foreach (var emb in e.Message.Attachments)
+                                foreach (var embed in e.Message.Attachments.Where(a => a.Url.EndsWith(".png") || a.Url.EndsWith(".jpg") || a.Url.EndsWith(".gif")))
                                 {
-                                    await channel.SendMessageAsync(emb.Url.ToString());
+                                    await channel.SendMessageAsync(embed.Url.ToString());
                                 }
                             }
                         }
@@ -49,16 +51,18 @@ public class PipedPiper : Outils.StartStop
                             .Select(chunk => (chunk[0], Enum.Parse<Connoisseur.Mode>(chunk[1]), int.Parse(chunk[2])))
                             .ToList();
                         var server = await Connoisseur.Create(startImmediately: false);
-                        await server.Serve(once: true, Custom: chunks);
+                        await server.Serve(once: true, Custom: chunks.Count > 0 ? chunks : null);
                     } ,
                     (Commands.setup, _)     => async () => 
                     {
                         var channels = e.Message.Content.Split(' ')[1..]
                             .Select(id => ulong.Parse(id))
                             .ToList();
-                        if(channels.Count > 0) {
+                        if(channels.Count > 0 ) {
                             Client.Targets = channels;
-                            await e.Channel.SendMessageAsync($"Bot Setup Completed {pipes.from} to {pipes.dest.Aggregate("", (a, b) => $"{a} {b}")}");
+                            var names = channels.Select(id => client.GetChannelAsync(id).Result)
+                                                .Select(ch => ch.Name).ToList();
+                            await e.Channel.SendMessageAsync($"Bot Setup Completed : Wired {names[0]} to {names.Aggregate("", (a, b) => $"{a} {b}")}");
                         }
                         else { 
                             await e.Channel.SendMessageAsync($"Please Provide Rooms Ids");
